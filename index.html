@@ -1,0 +1,627 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>誰偷走了我的金絲雀</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Noto+Serif+TC:wght@300;500;700;900&display=swap');
+
+        :root {
+            --bg-dark: #0f0b0a;
+            --paper-color: #d4c4b7;
+            --ink-black: #1a1614;
+            --cinnabar-red: #8a1f11;
+            --gold-leaf: #b89947;
+            --fade-gold: rgba(184, 153, 71, 0.3);
+        }
+
+        body, html {
+            margin: 0;
+            padding: 0;
+            height: 100%;
+            overflow: hidden;
+            background-color: var(--bg-dark);
+            color: var(--paper-color);
+            font-family: 'Noto Serif TC', serif;
+            user-select: none;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        /* 古籍容器 */
+        .book {
+            position: relative;
+            width: 95vw;
+            height: 90vh;
+            max-width: 700px;
+            max-height: 900px;
+            perspective: 2500px;
+            background-color: #1a1512;
+            box-shadow: 0 20px 50px rgba(0, 0, 0, 0.9), inset 0 0 100px rgba(0, 0, 0, 0.8);
+            /* 中式雙線邊框 */
+            border: 1px solid #3a2e24;
+            outline: 1px solid #3a2e24;
+            outline-offset: -6px;
+        }
+
+        /* 宣紙紋理與暗角 */
+        .book::before {
+            content: '';
+            position: absolute;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="200" height="200"><filter id="n"><feTurbulence type="fractalNoise" baseFrequency="0.8" numOctaves="3" stitchTiles="stitch"/></filter><rect width="100%" height="100%" filter="url(%23n)" opacity="0.05"/></svg>');
+            pointer-events: none;
+            z-index: 1;
+        }
+
+        /* 中式金絲籠暗紋 (古風款) */
+        .gold-cage {
+            position: absolute;
+            bottom: -50px;
+            right: -50px;
+            width: 350px;
+            height: 350px;
+            background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><circle cx="50" cy="50" r="45" fill="none" stroke="%23b89947" stroke-width="0.5" opacity="0.2"/><path d="M50 5 L50 95 M20 20 L80 80 M20 80 L80 20 M15 50 L85 50" stroke="%23b89947" stroke-width="0.5" opacity="0.2"/><circle cx="50" cy="50" r="30" fill="none" stroke="%23b89947" stroke-width="0.5" opacity="0.2"/></svg>');
+            background-size: contain;
+            background-repeat: no-repeat;
+            z-index: 2;
+            pointer-events: none;
+            animation: cageSway 10s ease-in-out infinite alternate;
+        }
+
+        @keyframes cageSway {
+            0% { transform: rotate(-5deg) translateY(0); }
+            100% { transform: rotate(5deg) translateY(-10px); }
+        }
+
+        .pages-container {
+            position: relative;
+            width: 100%;
+            height: 100%;
+            z-index: 5;
+        }
+
+        .page {
+            position: absolute;
+            top: 0; left: 0;
+            width: 100%; height: 100%;
+            padding: 40px 50px 80px 50px;
+            box-sizing: border-box;
+            background-color: #1a1512;
+            opacity: 0;
+            visibility: hidden;
+            transform-origin: left center;
+            transition: transform 0.8s cubic-bezier(0.645, 0.045, 0.355, 1), opacity 0.8s ease;
+            overflow-y: auto;
+            overflow-x: hidden;
+            /* 隱藏卷軸 */
+            scrollbar-width: none; 
+        }
+        .page::-webkit-scrollbar { display: none; }
+
+        .page.active {
+            opacity: 1;
+            visibility: visible;
+            transform: rotateY(0deg);
+            z-index: 10;
+        }
+
+        .page.flipping {
+            transform: rotateY(-90deg);
+            opacity: 0;
+        }
+
+        .page.flipped {
+            transform: rotateY(-180deg);
+            opacity: 0;
+            visibility: hidden;
+        }
+
+        /* 標題與排版 (民國/古風) */
+        .header {
+            text-align: center;
+            margin-bottom: 40px;
+            position: relative;
+        }
+
+        .book-title {
+            font-size: 2.5em;
+            color: var(--gold-leaf);
+            font-weight: 900;
+            letter-spacing: 5px;
+            margin: 0 0 10px 0;
+            text-shadow: 0 2px 10px rgba(0,0,0,0.8);
+        }
+
+        .sub-header {
+            font-size: 0.85em;
+            color: #7a6a5a;
+            display: flex;
+            justify-content: center;
+            gap: 20px;
+            border-top: 1px solid var(--fade-gold);
+            border-bottom: 1px solid var(--fade-gold);
+            padding: 5px 0;
+            width: 80%;
+            margin: 0 auto;
+        }
+
+        .intro-quote {
+            text-align: center;
+            font-style: italic;
+            color: #8a7b6c;
+            margin: 20px 0 30px;
+            font-size: 0.95em;
+        }
+
+        .rule-section {
+            margin-bottom: 40px;
+        }
+
+        .rule-title {
+            font-size: 1.4em;
+            color: var(--cinnabar-red);
+            font-weight: 700;
+            text-align: center;
+            margin-bottom: 25px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .rule-title::before, .rule-title::after {
+            content: '❖';
+            font-size: 0.7em;
+            color: var(--fade-gold);
+            margin: 0 15px;
+        }
+
+        .rule-sub-title {
+            text-align: center;
+            font-size: 0.85em;
+            color: #8a7b6c;
+            margin-top: -15px;
+            margin-bottom: 20px;
+            border-bottom: 1px dashed #3a2e24;
+            padding-bottom: 10px;
+        }
+
+        .rule-list {
+            list-style-type: none;
+            padding: 0;
+            margin: 0;
+        }
+
+        .rule-item {
+            margin-bottom: 25px;
+            line-height: 1.8;
+            font-size: 1.05em;
+            position: relative;
+            padding-left: 30px;
+        }
+
+        .rule-item-number {
+            position: absolute;
+            left: 0;
+            top: 0;
+            color: var(--gold-leaf);
+            font-weight: 700;
+        }
+
+        .sub-rule {
+            color: #a39586;
+            font-size: 0.9em;
+            margin-top: 5px;
+            padding-left: 15px;
+            border-left: 1px solid #3a2e24;
+            line-height: 1.6;
+        }
+
+        /* 警告與特殊文字 */
+        .hidden-rule {
+            color: var(--cinnabar-red);
+            margin: 35px 0 20px;
+            padding: 15px;
+            border: 1px solid var(--cinnabar-red);
+            background-color: rgba(138, 31, 17, 0.05);
+            text-align: center;
+            font-weight: 700;
+            position: relative;
+        }
+        
+        .hidden-rule::after {
+            content: '絕密';
+            position: absolute;
+            right: 10px;
+            bottom: -15px;
+            color: rgba(138, 31, 17, 0.4);
+            font-size: 2em;
+            font-weight: 900;
+            transform: rotate(-15deg);
+            border: 2px solid rgba(138, 31, 17, 0.4);
+            padding: 2px 5px;
+            border-radius: 5px;
+            pointer-events: none;
+        }
+
+        .text-bold { color: var(--gold-leaf); font-weight: 700; }
+        .text-danger { color: var(--cinnabar-red); }
+
+        /* 中式印章導航按鈕 */
+        .nav-buttons {
+            position: absolute;
+            bottom: 20px;
+            left: 0;
+            width: 100%;
+            display: flex;
+            justify-content: space-between;
+            padding: 0 40px;
+            box-sizing: border-box;
+            z-index: 100;
+        }
+
+        .nav-btn {
+            background: transparent;
+            color: var(--cinnabar-red);
+            border: 2px solid var(--cinnabar-red);
+            padding: 8px 15px;
+            font-family: 'Noto Serif TC', serif;
+            font-weight: 700;
+            font-size: 1em;
+            cursor: pointer;
+            border-radius: 3px;
+            transition: all 0.3s ease;
+            writing-mode: vertical-lr; /* 直行文字 */
+            letter-spacing: 5px;
+        }
+
+        .nav-btn:hover:not(:disabled) {
+            background-color: var(--cinnabar-red);
+            color: var(--bg-dark);
+        }
+
+        .nav-btn:disabled {
+            opacity: 0.2;
+            cursor: not-allowed;
+            border-color: #555;
+            color: #555;
+        }
+
+        /* ================= 特效區 (每頁獨一無二) ================= */
+
+        /* 頁面 1: 幽暗油燈 */
+        .effect-oil-lamp::after {
+            content: '';
+            position: absolute;
+            top: 50%; left: 50%;
+            width: 150%; height: 150%;
+            transform: translate(-50%, -50%);
+            background: radial-gradient(circle, rgba(212, 175, 55, 0.05) 0%, rgba(0,0,0,0.8) 70%);
+            pointer-events: none;
+            z-index: 20;
+            animation: lampFlicker 4s infinite alternate;
+        }
+        @keyframes lampFlicker {
+            0%, 100% { opacity: 0.8; }
+            25% { opacity: 0.95; }
+            50% { opacity: 0.7; }
+            75% { opacity: 1; }
+        }
+
+        /* 頁面 2: 水墨滲血 */
+        .effect-ink-bleed .rule-item::before {
+            content: '';
+            position: absolute;
+            left: -20px; top: 10px;
+            width: 40px; height: 40px;
+            background: radial-gradient(circle, rgba(138, 31, 17, 0.2) 0%, transparent 70%);
+            border-radius: 50%;
+            filter: blur(5px);
+            z-index: -1;
+            animation: inkSpread 6s infinite;
+        }
+        @keyframes inkSpread {
+            0% { transform: scale(0.5); opacity: 0; }
+            50% { transform: scale(1.5); opacity: 1; }
+            100% { transform: scale(2); opacity: 0; }
+        }
+
+        /* 頁面 3: 金羽飄落與狂亂 */
+        .effect-feathers {
+            position: absolute;
+            top: 0; left: 0; width: 100%; height: 100%;
+            pointer-events: none;
+            z-index: 1;
+            overflow: hidden;
+        }
+        .feather {
+            position: absolute;
+            color: rgba(184, 153, 71, 0.15);
+            font-size: 2em;
+            animation: fall linear infinite;
+        }
+        @keyframes fall {
+            0% { transform: translateY(-50px) rotate(0deg) translateX(0); opacity: 0;}
+            20% { opacity: 1;}
+            80% { opacity: 1;}
+            100% { transform: translateY(100vh) rotate(360deg) translateX(50px); opacity: 0;}
+        }
+        .madness-text {
+            color: var(--cinnabar-red);
+            font-weight: 900;
+            font-size: 1.1em;
+            text-shadow: 2px 2px 0px rgba(0,0,0,0.8), -1px -1px 5px rgba(255,0,0,0.5);
+            animation: shake 0.5s infinite;
+            display: inline-block;
+        }
+        @keyframes shake {
+            0% { transform: translate(1px, 1px) rotate(0deg); }
+            10% { transform: translate(-1px, -2px) rotate(-1deg); }
+            20% { transform: translate(-3px, 0px) rotate(1deg); }
+            30% { transform: translate(3px, 2px) rotate(0deg); }
+            40% { transform: translate(1px, -1px) rotate(1deg); }
+            50% { transform: translate(-1px, 2px) rotate(-1deg); }
+            60% { transform: translate(-3px, 1px) rotate(0deg); }
+            70% { transform: translate(3px, 1px) rotate(-1deg); }
+            80% { transform: translate(-1px, -1px) rotate(1deg); }
+            90% { transform: translate(1px, 2px) rotate(0deg); }
+            100% { transform: translate(1px, -2px) rotate(-1deg); }
+        }
+
+        /* 頁面 4: 紅月泣血 */
+        .effect-blood-drip {
+            position: absolute;
+            top: 0; left: 0; width: 100%; height: 100%;
+            pointer-events: none;
+            z-index: 20;
+            background: linear-gradient(180deg, rgba(138, 31, 17, 0.15) 0%, transparent 40%);
+        }
+        .drip {
+            position: absolute;
+            top: -20px;
+            width: 2px;
+            background-color: var(--cinnabar-red);
+            box-shadow: 0 0 5px var(--cinnabar-red);
+            animation: dripAnim 3s ease-in infinite;
+        }
+        @keyframes dripAnim {
+            0% { height: 0; top: 0; opacity: 1; }
+            80% { height: 80px; top: 10%; opacity: 0.8; }
+            100% { height: 100px; top: 15%; opacity: 0; }
+        }
+
+        /* 頁面 5: 舊神精神污染 */
+        .effect-corruption .rule-item {
+            animation: corruptBlur 3s infinite alternate;
+        }
+        .effect-corruption .rule-item:nth-child(2) { animation-delay: 1s; }
+        .effect-corruption .rule-item:nth-child(3) { animation-delay: 2s; }
+        @keyframes corruptBlur {
+            0% { filter: blur(0px); transform: skewX(0deg); text-shadow: none; }
+            90% { filter: blur(0px); transform: skewX(0deg); text-shadow: none; }
+            95% { filter: blur(1px); transform: skewX(-5deg); text-shadow: 2px 0 var(--cinnabar-red), -2px 0 #3a4a5a; }
+            100% { filter: blur(2px); transform: skewX(5deg); text-shadow: -2px 0 var(--cinnabar-red), 2px 0 #3a4a5a; }
+        }
+        .whisper-bg {
+            position: absolute;
+            top: 0; left: 0; width: 100%; height: 100%;
+            font-size: 5em;
+            color: rgba(255, 255, 255, 0.02);
+            font-weight: 900;
+            line-height: 1;
+            word-wrap: break-word;
+            overflow: hidden;
+            z-index: 0;
+            pointer-events: none;
+            text-align: justify;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="book">
+        <div class="gold-cage"></div>
+        
+        <div class="pages-container" id="pages">
+            
+            <!-- 頁面 1: 規則 1-5 (油燈搖曳特效) -->
+            <div class="page active effect-oil-lamp" id="page-1">
+                <div class="header">
+                    <h1 class="book-title">《誰偷走了我的金絲雀》</h1>
+                    <div class="sub-header">
+                       
+                    </div>
+                </div>
+
+                <div class="rule-section">
+                    <div class="rule-title">入住須知</div>
+                    <div class="intro-quote">（以毛筆字寫在泛黃宣紙上，懸掛於宅門）</div>
+                    
+                    <ul class="rule-list">
+                        <li class="rule-item"><span class="rule-item-number">1.</span>大宅日出而啟，日落而閉。
+                            <div class="sub-rule">若見西廂廊燈自明，<span class="text-danger">勿近，勿問，勿念。</span></div>
+                        </li>
+                        <li class="rule-item"><span class="rule-item-number">2.</span>主人好客，每日備晨膳。
+                            <div class="sub-rule">務必誇讚廚子手藝，但請自行看清你入口的食物究竟為何。</div>
+                            <div class="sub-rule text-danger" style="font-style: italic;">假日沒有廚子，假日沒有廚子。</div>
+                        </li>
+                        <li class="rule-item"><span class="rule-item-number">3.</span>宅中僕役七人。
+                            <div class="sub-rule">小廚衣服都是青色的，若血衣小廚，立即低頭閉眼，等待其婉轉唱起戲曲直至結束，戲曲持續時不能發出聲音。</div>
+                        </li>
+                        <li class="rule-item"><span class="rule-item-number">4.</span>金絲雀為主人心愛之物。
+                            <div class="sub-rule">每日可至書閣翻閱一本典籍，但若書頁中夾有書籤且為烏羽，需立即在門沿焚香三柱。</div>
+                            <div class="sub-rule">若當天未前往書閣或是未發現烏羽，請在熄燈前後前往西廂。</div>
+                        </li>
+                        <li class="rule-item"><span class="rule-item-number">5.</span>宅中唯有油燈照明。
+                            <div class="sub-rule">請自行注意區分油燈種類，不可以再門口懸掛其他種類油燈過夜。</div>
+                            <div class="sub-rule">若任何燈焰驟然轉綠，請誦《往生咒》，等待小廚前來救援，小廚輕點你左臂三下方可睜眼。</div>
+                        </li>
+                        <li class="rule-item"><span class="rule-item-number">6.</span>大宅中沒有鳥兒。</li>
+                    </ul>
+
+                    <div class="hidden-rule">
+                        （隱藏規則：佴泗降臨後增加）<br><br>
+                        7. 廊中出現紅燈盞且上頭映照出人影時，需獻上一滴鮮血入燈油。<br>
+                        <span class="text-bold">忌回頭，忌數影，忌哭嚎。</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 頁面 2: 詭物規則 (水墨滲血特效) -->
+            <div class="page effect-ink-bleed" id="page-2">
+                <div class="rule-section">
+                    <div class="rule-title">詭物規則</div>
+                    <div class="rule-sub-title">詭物 ｜ 可提供的幫助 ｜ 死亡條件</div>
+                    
+                    <ul class="rule-list">
+                        <li class="rule-item"><span class="text-bold">・小廚</span>
+                            <div class="sub-rule">1. 正確稱呼其名（可在族譜查明），可獲宅院地圖2。贈其宋代銅錢（可在賬房找出），可代你完成一次危險探查</div>
+                            <div class="sub-rule" style="color:var(--cinnabar-red); border-left-color:var(--cinnabar-red);">
+                                1. 連續三次錯誤使喚其姓名<br>
+                                2. 請他去超出他身份範圍的地方完成探查
+                            </div>
+                        </li>
+                        <li class="rule-item" style="margin-top: 30px;"><span class="text-bold">・提燈</span>
+                            <div class="sub-rule">1. 人油燈以鮮血喂養，可照亮隱藏的道路（一盞人油燈可使用三次，但需求鮮血量會增加）</div>
+                            <div class="sub-rule" style="color:var(--cinnabar-red); border-left-color:var(--cinnabar-red);">
+                                1. 在紅月之夜時提燈映出自己的影子<br>
+                                2. 燈油滴落三滴以上在地面
+                            </div>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+
+            <!-- 頁面 3: 廚子 & 幻影 (金羽飄落與狂亂特效) -->
+            <div class="page" id="page-3">
+                <div class="effect-feathers">
+                    <div class="feather" style="left: 10%; animation-duration: 12s; animation-delay: 0s;">🪶</div>
+                    <div class="feather" style="left: 50%; animation-duration: 15s; animation-delay: 2s;">🪶</div>
+                    <div class="feather" style="left: 80%; animation-duration: 10s; animation-delay: 5s;">🪶</div>
+                </div>
+                <div class="rule-section" style="position: relative; z-index: 2;">
+                    <ul class="rule-list">
+                        <li class="rule-item"><span class="text-bold">・廚子</span>
+                            <div class="sub-rule">1. 吃完其一日早晨所有餐點，可獲得廚子的喜愛（抵消一次低等污染）</div>
+                            <div class="sub-rule" style="color:var(--cinnabar-red); border-left-color:var(--cinnabar-red);">
+                                1. 浪費食物被發現<br>
+                                2. 食物中某些是高等污染，請自行分辨每個廚子喜愛做的食物<br>
+                                3. 假日沒有廚子，請不要攝入任何食物<br>
+                                <span style="color:#8a7b6c;">星期一擅做粥、星期二愛做蛋、星期三喜做魚、星期四廚嗜甜、星期五好做肉、假日沒有...假日沒有廚子？假日沒有廚子！！</span><br>
+                                <span class="madness-text">假日沒有廚子！！</span>
+                            </div>
+                        </li>
+                        <li class="rule-item" style="margin-top: 30px;"><span class="text-bold">・金絲雀幻影</span>
+                            <div class="sub-rule">1. 在大堂學鳥類“嗚叫”三聲，可獲得一條真實線索（每日品種不同），但會使主人對你關注度增加</div>
+                            <div class="sub-rule" style="color:var(--cinnabar-red); border-left-color:var(--cinnabar-red);">
+                                1. 在主人面前透露出自己對金絲雀了解程度過多
+                            </div>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+
+            <!-- 頁面 4: 副本要求 (紅月泣血特效) -->
+            <div class="page" id="page-4">
+                <div class="effect-blood-drip">
+                    <div class="drip" style="left: 20%; animation-delay: 0.5s;"></div>
+                    <div class="drip" style="left: 60%; animation-delay: 1.2s;"></div>
+                    <div class="drip" style="left: 85%; animation-delay: 2.5s;"></div>
+                </div>
+                <div class="rule-section">
+                    <div class="rule-title">副本要求</div>
+                    <div class="sub-rule" style="border-left: none; text-align: center;">活過七日 ｜ 找出是誰偷走了金絲雀</div>
+
+                    <div class="rule-title" style="margin-top: 40px;">每日任務</div>
+                    <div class="sub-rule" style="border-left: none; text-align: center;">享用早餐 ｜ 回報調查進度</div>
+
+                    <div class="rule-title" style="margin-top: 50px;">死亡條件深化</div>
+                    <ul class="rule-list">
+                        <li class="rule-item"><span class="rule-item-number">1.</span>無能者：連續兩日未能向主人提供有效線索者，第二日早餐過後會被廚子請至廚房參觀。</li>
+                        <li class="rule-item"><span class="rule-item-number">2.</span>多言者：在宅中公開推理金絲雀真實身份超過三次者，會吸引主人目光增加遊戲難度。會開始咳出羽毛，最終骨架以鳥形蜷縮乾癟於房中。</li>
+                        <li class="rule-item"><span class="rule-item-number">3.</span>背光者：日落後未持正確油燈行走者（於紅月時請使用人油燈），將被小廚拖入後院，煉製成新的提燈燃料。</li>
+                    </ul>
+                </div>
+            </div>
+
+            <!-- 頁面 5: 異化追加 (舊神精神污染特效) -->
+            <div class="page effect-corruption" id="page-5">
+                <div class="whisper-bg">
+                    佴泗降臨佴泗降臨紅月紅月紅月異化異化異化精神污染精神污染舊神低語舊神低語
+                </div>
+                <div class="rule-section" style="position: relative; z-index: 2;">
+                    <div class="rule-title">異化追加</div>
+                    <ul class="rule-list">
+                        <li class="rule-item"><span class="rule-item-number">1.</span>定義替換：金絲雀之定義被更換為遊蕩型Boss本體。</li>
+                        <li class="rule-item"><span class="rule-item-number">2.</span>認知污染：佴泗經過的走廊時，該條走廊當晚必定會是紅月之景。</li>
+                        <li class="rule-item"><span class="rule-item-number">3.</span>舊神低語：偶爾聽見似經非經的吟誦（此為佴泗降臨時，可在大堂吟誦換取真實線索之內容）。跟讀超過四句者，會在原地直接異化，精神值降為0。</li>
+                    </ul>
+                </div>
+            </div>
+            
+        </div>
+
+        <!-- 導航按鈕 -->
+        <div class="nav-buttons">
+            <button class="nav-btn" id="prevBtn" disabled>上一頁</button>
+            <button class="nav-btn" id="nextBtn">下一頁</button>
+        </div>
+    </div>
+
+    <script>
+        const pages = document.querySelectorAll('.page');
+        const prevBtn = document.getElementById('prevBtn');
+        const nextBtn = document.getElementById('nextBtn');
+        let currentPageIndex = 0;
+
+        function updatePages(direction) {
+            pages.forEach((page, index) => {
+                // 清理所有狀態
+                page.classList.remove('active', 'flipping', 'flipped');
+                
+                if (index === currentPageIndex) {
+                    page.classList.add('active');
+                } else if (index < currentPageIndex) {
+                    // 已經翻過去的頁面
+                    page.classList.add('flipped');
+                }
+            });
+
+            prevBtn.disabled = currentPageIndex === 0;
+            nextBtn.disabled = currentPageIndex === pages.length - 1;
+        }
+
+        nextBtn.addEventListener('click', () => {
+            if (currentPageIndex < pages.length - 1) {
+                // 向下翻頁：當前頁面加上翻轉動畫
+                pages[currentPageIndex].classList.add('flipping');
+                currentPageIndex++;
+                
+                // 等待動畫過半時切換狀態
+                setTimeout(() => {
+                    updatePages('next');
+                }, 400); 
+            }
+        });
+
+        prevBtn.addEventListener('click', () => {
+            if (currentPageIndex > 0) {
+                // 向上翻頁：目標頁面先變成 flipping 狀態（在-90度），然後變成 active
+                currentPageIndex--;
+                pages[currentPageIndex].classList.remove('flipped');
+                pages[currentPageIndex].classList.add('flipping');
+                
+                // 強制瀏覽器重繪
+                void pages[currentPageIndex].offsetWidth;
+                
+                updatePages('prev');
+            }
+        });
+
+        // 初始狀態設定
+        updatePages('init');
+    </script>
+</body>
+</html>
